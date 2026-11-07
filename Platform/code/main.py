@@ -3,17 +3,28 @@ from sprites import *
 from groups import AllSprites
 from support import *
 from timer import Timer
-from  random import randint
+from random import randint
 
 
 
 class Game:
     def __init__(self):
         pygame.init()
+        pygame.font.init()
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption('Platformer')
         self.clock = pygame.time.Clock()
         self.running = True
+
+        self.font = pygame.font.SysFont("Marker Felt", 25)
+
+
+        # give player its score and display it later
+        self.score = 0
+        self.score_surface = self.font.render(f"Score: {self.score}", True, (255, 255, 255))
+        self.score_rect = self.score_surface.get_rect()
+        self.score_rect.center = (900, 500)
+
 
         # groups 
         self.all_sprites = AllSprites()
@@ -26,7 +37,9 @@ class Game:
         self.setup()
 
         #timer
-        self.bee_timer = Timer(500, func = self.create_bee, autostart = True, repeat = True)
+        self.bee_timer = Timer(500, func=self.create_bee)
+        self.bee_timer.activate()
+        # self.bee_timer = Timer(500, func = self.create_bee, autostart = True, repeat = True)
 
     #create 
 
@@ -45,7 +58,7 @@ class Game:
     def load_assets(self):
         #graphics 
         self.player_frames = import_folder('images', 'player')
-        self.bullet_surf = import_image('images', 'gun', 'bullet')
+        self.bullet_surf = import_image('images', 'gun', "bullet")
         self.fire_surf = import_image('images', 'gun', 'fire')
         self.bee_frames = import_folder('images', 'enemies', 'bee')
         self.worm_frames = import_folder('images', 'enemies', 'worm')
@@ -81,6 +94,8 @@ class Game:
             sprite_collisions = pygame.sprite.spritecollide(bullet, self.enemy_sprites, False, pygame.sprite.collide_mask)
             if sprite_collisions:
                 self.audio['impact'].play().set_volume(0.3)
+                self.score += 1
+                print(self.score)
                 bullet.kill()
                 for sprite in sprite_collisions:
                     sprite.destroy()
@@ -88,6 +103,7 @@ class Game:
         # enemies collide with player
         if pygame.sprite.spritecollide(self.player, self.enemy_sprites, False, pygame.sprite.collide_mask):
             self.running = False
+
 
     def run(self):
         while self.running:
@@ -104,8 +120,9 @@ class Game:
 
             # draw 
             self.display_surface.fill(BG_COLOR)
+            self.display_surface.blit(self.score_surface, self.score_rect)
             self.all_sprites.draw(self.player.rect.center)#passes player coords to draw function in groups.py
-            pygame.display.update()
+            pygame.display.flip()
         
         pygame.quit()
 

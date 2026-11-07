@@ -28,7 +28,7 @@ class Fire(Sprite):
         super().__init__(pos, surf, groups)
         self.player = player
         self.flip = player.flip
-        self.timer = Timer(100, autostart = True, func = self.kill)
+        self.timer = Timer(100, func = self.kill)
         self.y_offset = pygame.Vector2(0,8)
 
         if self.player.flip:
@@ -122,6 +122,8 @@ class Player(AnimatedSprite):
         self.speed = 400
         self.gravity = 50
         self.on_floor = False
+        self.jump_count = 0
+        self.space_pressed = False
 
         #timer
         self.shoot_timer = Timer(500)
@@ -130,10 +132,13 @@ class Player(AnimatedSprite):
     def input(self):
         keys = pygame.key.get_pressed()
         self.direction.x = int(keys[pygame.K_RIGHT] - keys[pygame.K_LEFT])
-        if keys[pygame.K_SPACE] and self.on_floor:
-            self.direction.y = -20
+        space_pressed = keys[pygame.K_SPACE]
+        if space_pressed and not self.space_pressed and self.jump_count < 2:
+            self.direction.y = -17
+            self.jump_count += 1
+        self.space_pressed = space_pressed
 
-        if keys[pygame.K_s] and not self.shoot_timer:
+        if keys[pygame.K_s] and not self.shoot_timer.active:
             self.create_bullet(self.rect.center, -1 if self.flip else 1)
             self.shoot_timer.activate()
     #create the movement properites
@@ -164,6 +169,8 @@ class Player(AnimatedSprite):
     def check_floor(self):
         bottom_rect = pygame.FRect((0,0), (self.rect.width, 2)).move_to(midtop = self.rect.midbottom)
         self.on_floor = True if bottom_rect.collidelist([sprite.rect for sprite in self.collision_sprites]) >= 0 else False
+        if self.on_floor:
+            self.jump_count = 0
         #create a rectangle below the player then check if the rectangle ever collides with a collision sprite then you can jump as on flooor is set as true
     
     def animate(self, dt):
